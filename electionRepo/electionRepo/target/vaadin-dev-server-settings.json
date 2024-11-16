@@ -1,0 +1,17 @@
+{
+  "frontendFolder": "C:/Users/drc2d/OneDrive/Documents/fall2024/eecs498/project/electionRepo/electionRepo/./frontend",
+  "themeFolder": "themes",
+  "themeResourceFolder": "C:/Users/drc2d/OneDrive/Documents/fall2024/eecs498/project/electionRepo/electionRepo/./frontend/generated/jar-resources",
+  "staticOutput": "C:/Users/drc2d/OneDrive/Documents/fall2024/eecs498/project/electionRepo/electionRepo/target/classes/META-INF/VAADIN/webapp/VAADIN/static",
+  "generatedFolder": "generated",
+  "statsOutput": "C:\\Users\\drc2d\\OneDrive\\Documents\\fall2024\\eecs498\\project\\electionRepo\\electionRepo\\target\\classes\\META-INF\\VAADIN\\config",
+  "frontendBundleOutput": "C:\\Users\\drc2d\\OneDrive\\Documents\\fall2024\\eecs498\\project\\electionRepo\\electionRepo\\target\\classes\\META-INF\\VAADIN\\webapp",
+  "devBundleOutput": "C:/Users/drc2d/OneDrive/Documents/fall2024/eecs498/project/electionRepo/electionRepo/src/main/dev-bundle/webapp",
+  "devBundleStatsOutput": "C:/Users/drc2d/OneDrive/Documents/fall2024/eecs498/project/electionRepo/electionRepo/src/main/dev-bundle/config",
+  "jarResourcesFolder": "C:/Users/drc2d/OneDrive/Documents/fall2024/eecs498/project/electionRepo/electionRepo/./frontend/generated/jar-resources",
+  "themeName": "",
+  "clientServiceWorkerSource": "C:\\Users\\drc2d\\OneDrive\\Documents\\fall2024\\eecs498\\project\\electionRepo\\electionRepo\\target\\sw.ts",
+  "pwaEnabled": false,
+  "offlineEnabled": false,
+  "offlinePath": "'offline.html'"
+}
