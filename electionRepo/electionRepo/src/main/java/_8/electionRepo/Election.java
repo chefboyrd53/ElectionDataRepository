@@ -15,7 +15,8 @@ public class Election {
     private String state;
     private String county;
     private String electionType;
-    private String electionData;  // Path or URL to the CVR file
+    private String electionData;
+    private String sourceUrl;
 
     // Getters and Setters
     public Long getId() { return id; }
@@ -35,5 +36,7 @@ public class Election {
 
     public String getElectionData() { return electionData; }
     public void setElectionData(String electionData) { this.electionData = electionData; }
+    
+    public String getSourceUrl() { return sourceUrl; }
+    public void setSourceUrl(String sourceUrl) { this.sourceUrl = sourceUrl; }
 }
-
