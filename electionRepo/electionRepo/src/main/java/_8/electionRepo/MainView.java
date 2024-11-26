@@ -13,15 +13,22 @@ import com.vaadin.flow.component.textfield.TextField;
 import com.vaadin.flow.component.upload.Upload;
 import com.vaadin.flow.component.upload.receivers.MemoryBuffer;
 import com.vaadin.flow.router.Route;
-import org.springframework.beans.factory.annotation.Autowired;
 
+import org.apache.commons.io.FilenameUtils;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
+
+import java.io.FileWriter;
+import java.io.IOException;
 import java.io.InputStream;
 import java.util.List;
 
 @Route("")
 public class MainView extends VerticalLayout {
 
-    private final ElectionRepository electionRepository;
+	@Value("${box.developer.token}")
+    private String DEV_TOKEN;
+	private final ElectionRepository electionRepository;
     private final BoxService boxService; 
 
     // Search 
@@ -33,13 +40,14 @@ public class MainView extends VerticalLayout {
     private final Grid<Election> grid = new Grid<>(Election.class);
 
     // Upload 
-    private final ComboBox<Integer> uploadElectionYearComboBox = new ComboBox<>("Year");
-    private final ComboBox<String> uploadStateComboBox = new ComboBox<>("State");
-    private final ComboBox<String> uploadCountyComboBox = new ComboBox<>("County");
+    private final TextField uploadElectionYearField = new TextField("Year");
+    private final TextField uploadStateField = new TextField("State");
+    private final TextField uploadCountyField = new TextField("County");
     private final ComboBox<String> uploadElectionTypeComboBox = new ComboBox<>("Election Type");
     private final MemoryBuffer memoryBuffer = new MemoryBuffer();
     private final Upload upload = new Upload(memoryBuffer);
     private final TextField sourceUrlField = new TextField("Source URL");
+    private final ComboBox<String> uploadFileTypeComboBox = new ComboBox<>("File Type");
     private final Button uploadButton = new Button("Upload File");
 
     @Autowired
@@ -101,7 +109,8 @@ public class MainView extends VerticalLayout {
     private VerticalLayout createUploadLayout() {
         VerticalLayout layout = new VerticalLayout();
 
-        configureComboBoxes(uploadStateComboBox, uploadElectionYearComboBox, uploadCountyComboBox, uploadElectionTypeComboBox);
+        uploadElectionTypeComboBox.setItems(electionRepository.findDistinctElectionTypes());
+        uploadFileTypeComboBox.setItems("CVR", "Ballot Images");
 
         upload.setDropLabel(new Span("CVR/Ballot Images"));
         upload.setAcceptedFileTypes(".csv", ".xml", ".pdf", ".xlsx", ".json");
@@ -109,22 +118,38 @@ public class MainView extends VerticalLayout {
         // upload button 
         uploadButton.addClickListener(event -> {
             if (validateUploadInputs()) {
-                String fileName = memoryBuffer.getFileName();
                 InputStream fileStream = memoryBuffer.getInputStream();
 
                 try {
-                    String fileId = boxService.uploadFile(fileName, fileStream);
+                    String fileName = uploadStateField.getValue() + "-" + uploadCountyField.getValue() + "-" + uploadElectionYearField.getValue()
+                    + "-" + uploadElectionTypeComboBox.getValue() + "-" + ballotImageOrCVR(uploadFileTypeComboBox.getValue()) + "." + FilenameUtils.getExtension(memoryBuffer.getFileName());
+                    String fileId = boxService.uploadFile(fileName, fileStream, uploadStateField.getValue());
 
                     // save file details in database
                     Election newElection = new Election();
                     newElection.setElectionData(fileId);
                     newElection.setSourceUrl(sourceUrlField.getValue());
-                    newElection.setElectionYear(uploadElectionYearComboBox.getValue());
-                    newElection.setState(uploadStateComboBox.getValue());
-                    newElection.setCounty(uploadCountyComboBox.getValue());
+                    try {
+                        int year = Integer.parseInt(uploadElectionYearField.getValue());
+                        newElection.setElectionYear(year);
+                    } catch (NumberFormatException e) {
+                        Notification.show("Please enter a valid year", 3000, Notification.Position.MIDDLE);
+                    }
+                    newElection.setState(uploadStateField.getValue());
+                    newElection.setCounty(uploadCountyField.getValue());
                     newElection.setElectionType(uploadElectionTypeComboBox.getValue());
 
                     electionRepository.save(newElection);
+                    
+                    try (FileWriter fw = new FileWriter("src/main/resources/data.sql", true)) {
+                        fw.write(String.format(
+                            "INSERT INTO election (election_year, state, county, election_type, election_data, source_url) VALUES (%s, '%s', '%s', '%s', '%s', '%s');%n",
+                            newElection.getElectionYear(), newElection.getState(), newElection.getCounty(), newElection.getElectionType(), newElection.getElectionData(), newElection.getSourceUrl()
+                        ));
+                    } catch (IOException e) {
+                        e.printStackTrace();
+                        throw new RuntimeException("Error appending to data.sql");
+                    }
 
                     sourceUrlField.clear();
                     upload.getElement().setProperty("files", ""); 
@@ -137,11 +162,20 @@ public class MainView extends VerticalLayout {
             }
         });
 
-        layout.add(uploadElectionYearComboBox, uploadStateComboBox, uploadCountyComboBox, uploadElectionTypeComboBox, sourceUrlField, upload, uploadButton);
+        layout.add(uploadElectionYearField, uploadStateField, uploadCountyField, uploadElectionTypeComboBox, sourceUrlField, uploadFileTypeComboBox, upload, uploadButton);
         return layout;
     }
 
-    private void configureComboBoxes(ComboBox<String> state, ComboBox<Integer> electionYear, ComboBox<String> county, ComboBox<String> electionType) {
+    private String ballotImageOrCVR(String value) {
+		if (value.equals("CVR")) {
+			return "CVR";
+		}
+		else {
+			return "IMG";
+		}
+	}
+
+	private void configureComboBoxes(ComboBox<String> state, ComboBox<Integer> electionYear, ComboBox<String> county, ComboBox<String> electionType) {
         state.setItems(electionRepository.findDistinctStates());
         electionYear.setItems(electionRepository.findDistinctElectionYears());
         county.setItems(electionRepository.findDistinctCounties());
@@ -149,12 +183,13 @@ public class MainView extends VerticalLayout {
     }
 
     private boolean validateUploadInputs() {
-        return uploadElectionYearComboBox.getValue() != null &&
-                uploadStateComboBox.getValue() != null &&
-                uploadCountyComboBox.getValue() != null &&
+        return uploadElectionYearField.getValue() != null &&
+                uploadStateField.getValue() != null &&
+                uploadCountyField.getValue() != null &&
                 uploadElectionTypeComboBox.getValue() != null &&
                 memoryBuffer.getFileName() != null &&
-                !sourceUrlField.isEmpty();
+                !sourceUrlField.isEmpty() &&
+                uploadFileTypeComboBox.getValue() != null;
     }
 
     private void searchElections() {
@@ -168,6 +203,6 @@ public class MainView extends VerticalLayout {
     }
 
     private String generateBoxDownloadUrl(String fileId) {
-        return "https://api.box.com/2.0/files/" + fileId + "/content";
+        return "https://api.box.com/2.0/files/" + fileId + "/content?access_token=" + DEV_TOKEN;
     }
 }

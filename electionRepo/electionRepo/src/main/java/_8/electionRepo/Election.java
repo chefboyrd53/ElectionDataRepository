@@ -40,3 +40,4 @@ public class Election {
     public String getSourceUrl() { return sourceUrl; }
     public void setSourceUrl(String sourceUrl) { this.sourceUrl = sourceUrl; }
 }
+
