@@ -113,7 +113,7 @@ public class MainView extends VerticalLayout {
         uploadFileTypeComboBox.setItems("CVR", "Ballot Images");
 
         upload.setDropLabel(new Span("CVR/Ballot Images"));
-        upload.setAcceptedFileTypes(".csv", ".xml", ".pdf", ".xlsx", ".json");
+        upload.setAcceptedFileTypes(".csv", ".xml", ".pdf", ".xlsx", ".json", ".zip");
 
         // upload button 
         uploadButton.addClickListener(event -> {
